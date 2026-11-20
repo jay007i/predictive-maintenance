@@ -4,6 +4,7 @@ ENGINE_ID_COLUMN = "engine_id"
 CYCLE_COLUMN = "cycle"
 MAX_CYCLE_COLUMN = "max_cycle"
 RUL_COLUMN = "RUL"
+PREDICTED_RUL_COLUMN = "predicted_rul"
 
 RAW_COLUMN_NAMES = (
     ENGINE_ID_COLUMN,

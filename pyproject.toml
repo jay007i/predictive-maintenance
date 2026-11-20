@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "predictive-maintenance"
+version = "0.1.0"
+description = "Reusable components for NASA C-MAPSS remaining-useful-life prediction."
+requires-python = ">=3.11"
+dependencies = [
+    "joblib==1.6.0",
+    "pandas==3.0.6",
+    "scikit-learn==1.9.1",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = "-ra"
+markers = [
+    "integration: read-only verification against local FD001 data and artifacts",
+]

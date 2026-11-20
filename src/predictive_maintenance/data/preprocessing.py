@@ -8,17 +8,7 @@ from predictive_maintenance.constants import (
     MODEL_FEATURES,
     RUL_COLUMN,
 )
-
-
-def _validate_required_columns(
-    data: pd.DataFrame, required_columns: tuple[str, ...], data_name: str
-) -> None:
-    """Raise an error when a DataFrame is missing required columns."""
-    missing_columns = sorted(set(required_columns) - set(data.columns))
-    if missing_columns:
-        raise ValueError(
-            f"{data_name} is missing required columns: {', '.join(missing_columns)}."
-        )
+from predictive_maintenance.data.validation import validate_required_columns
 
 
 def add_rul_target(data: pd.DataFrame) -> pd.DataFrame:
@@ -37,7 +27,7 @@ def add_rul_target(data: pd.DataFrame) -> pd.DataFrame:
     Raises:
         ValueError: If the engine identifier or cycle column is missing.
     """
-    _validate_required_columns(
+    validate_required_columns(
         data,
         (ENGINE_ID_COLUMN, CYCLE_COLUMN),
         "Training data",
@@ -61,15 +51,57 @@ def prepare_training_data(data: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]:
     Raises:
         ValueError: If a required model feature or the RUL target is missing.
     """
-    _validate_required_columns(
+    validate_required_columns(
         data,
         (*MODEL_FEATURES, RUL_COLUMN),
         "Training data",
     )
 
-    features = data.loc[:, list(MODEL_FEATURES)].copy()
+    features = select_model_features(data)
     target = data[RUL_COLUMN].copy()
     return features, target
+
+
+def select_model_features(data: pd.DataFrame) -> pd.DataFrame:
+    """Select model inputs in the saved SVR pipeline's exact feature order.
+
+    Args:
+        data: Data containing all entries in ``MODEL_FEATURES``.
+
+    Returns:
+        A copy containing exactly the 17 ordered model features.
+
+    Raises:
+        ValueError: If any selected model feature is missing.
+    """
+    validate_required_columns(data, MODEL_FEATURES, "Model feature data")
+    return data.loc[:, list(MODEL_FEATURES)].copy()
+
+
+def select_final_engine_cycles(data: pd.DataFrame) -> pd.DataFrame:
+    """Return the latest observed row for each engine, ordered by engine ID.
+
+    Args:
+        data: C-MAPSS trajectory data containing engine and cycle columns.
+
+    Returns:
+        One latest-cycle row per engine. Original row indexes are preserved.
+
+    Raises:
+        ValueError: If the engine identifier or cycle column is missing.
+    """
+    validate_required_columns(
+        data,
+        (ENGINE_ID_COLUMN, CYCLE_COLUMN),
+        "Inference data",
+    )
+
+    return (
+        data.sort_values([ENGINE_ID_COLUMN, CYCLE_COLUMN])
+        .groupby(ENGINE_ID_COLUMN, sort=False)
+        .tail(1)
+        .sort_values(ENGINE_ID_COLUMN)
+    )
 
 
 def prepare_inference_data(data: pd.DataFrame) -> pd.DataFrame:
@@ -90,16 +122,5 @@ def prepare_inference_data(data: pd.DataFrame) -> pd.DataFrame:
     Raises:
         ValueError: If required identifiers or model features are missing.
     """
-    _validate_required_columns(
-        data,
-        (ENGINE_ID_COLUMN, CYCLE_COLUMN, *MODEL_FEATURES),
-        "Inference data",
-    )
-
-    latest_cycles = (
-        data.sort_values([ENGINE_ID_COLUMN, CYCLE_COLUMN])
-        .groupby(ENGINE_ID_COLUMN, sort=False)
-        .tail(1)
-        .sort_values(ENGINE_ID_COLUMN)
-    )
-    return latest_cycles.loc[:, list(MODEL_FEATURES)].copy()
+    latest_cycles = select_final_engine_cycles(data)
+    return select_model_features(latest_cycles)
