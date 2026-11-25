@@ -12,3 +12,6 @@ xgboost==3.4.1
 
 # Testing
 pytest==9.2.0
+# Data versioning
+# dvc==3.67.1
+dvc[s3]==3.67.1
