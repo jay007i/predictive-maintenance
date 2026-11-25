@@ -40,6 +40,54 @@ raw C-MAPSS trajectory -> validate -> latest row per engine
 -> ordered 17 features -> saved SVR pipeline -> engine_id + predicted_rul
 ```
 
+## Data versioning — DVC and Amazon S3
+
+The project uses DVC to track the three NASA C-MAPSS FD001 datasets:
+
+- `train_FD001.txt`
+- `test_FD001.txt`
+- `RUL_FD001.txt`
+
+### Architecture
+
+- Git tracks DVC metadata (`.dvc` files) and shared project configuration.
+- DVC stores dataset contents in its local cache.
+- Amazon S3 acts as the remote storage for versioned dataset contents.
+- AWS CLI authentication is configured locally using temporary credentials.
+- Machine-specific AWS configuration is excluded from Git.
+
+### Reproducing the data environment
+
+Install project dependencies:
+
+```powershell
+python -m pip install -r requirements.txt
+```
+
+Authenticate with your configured AWS profile, then restore the datasets:
+
+```powershell
+dvc pull
+```
+
+Check data synchronization:
+
+```powershell
+dvc status -c
+```
+
+Upload updated tracked data:
+
+```powershell
+dvc push
+```
+
+### Verification
+
+- Three FD001 datasets successfully uploaded to Amazon S3.
+- DVC reports local cache and remote storage in sync.
+- A fresh Git clone successfully restored all three datasets using `dvc pull`.
+
 ## Installation and verification
 
 From the project root, install the pinned dependencies:
@@ -65,5 +113,8 @@ result. The Stage 5 verification reproduced MAE `19.45082771133248`, RMSE
 - RUL target generation is valid only for run-to-failure training trajectories.
 - Official test trajectories are reduced to their final observed cycle.
 - Joblib artifacts are pickle-based: load only trusted local artifacts.
-- DVC, MLflow, FastAPI, Docker, CI/CD, deployment, and monitoring are not yet
-  implemented.
+- DVC data versioning and Amazon S3 remote storage are implemented
+  for the three FD001 datasets.
+- DVC pipeline orchestration is not yet implemented.
+- MLflow, FastAPI, Docker, CI/CD, deployment, and monitoring
+  are planned for subsequent project stages.
