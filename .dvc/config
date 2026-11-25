@@ -1,0 +1,6 @@
+[core]
+    autostage = true
+    remote = storage
+['remote "storage"']
+    url = s3://ai-ml-projects-521124646517-eu-north-1-an/predictive-maintenance/dvc-storage
+    region = eu-north-1

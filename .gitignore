@@ -2,7 +2,12 @@
 __pycache__/
 .ipynb_checkpoints/
 .env
-data/raw/
+# Raw datasets: ignore data, keep DVC metadata in Git
+# DVC-managed FD001 datasets
+/data/raw/train_FD001.txt
+/data/raw/test_FD001.txt
+/data/raw/RUL_FD001.txt
+
 data/interim/
 data/processed/
 /models/
